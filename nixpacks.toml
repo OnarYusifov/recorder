@@ -1,0 +1,12 @@
+[phases.setup]
+nixPkgs = ['nodejs_22', 'python3', 'gcc', 'pkg-config', 'cairo', 'pango', 'libjpeg', 'giflib', 'librsvg']
+
+[phases.install]
+cmds = ['npm ci']
+
+[phases.build]
+cmds = []
+
+[start]
+cmd = 'npm run start'
+
