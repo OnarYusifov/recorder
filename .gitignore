@@ -1,0 +1,30 @@
+# Environment variables
+.env
+
+# Node modules
+node_modules/
+
+# Output files
+output/
+recordings/
+
+# Match data
+data/matches.json
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Temporary files
+tmp/
+temp/

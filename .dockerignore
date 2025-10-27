@@ -1,0 +1,16 @@
+node_modules
+npm-debug.log
+.env
+.git
+.gitignore
+output
+recordings
+data/matches.json
+*.md
+.vscode
+.idea
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
