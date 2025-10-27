@@ -12,6 +12,13 @@ const PORT = process.env.WEB_PORT || 8080;
 const ACCESS_PASSWORD = process.env.WEB_ACCESS_PASSWORD || 'change_me_access';
 const ADMIN_PASSWORD = process.env.WEB_ADMIN_PASSWORD || 'change_me_admin';
 
+// Debug: Show if passwords are loaded (don't show actual passwords!)
+console.log(`🔐 Access password set: ${ACCESS_PASSWORD !== 'change_me_access' ? 'YES' : 'NO (using default)'}`);
+console.log(`🔐 Admin password set: ${ADMIN_PASSWORD !== 'change_me_admin' ? 'YES' : 'NO (using default)'}`);
+if (ACCESS_PASSWORD === 'change_me_access' || ADMIN_PASSWORD === 'change_me_admin') {
+    console.warn('⚠️  WARNING: Using default passwords! Set WEB_ACCESS_PASSWORD and WEB_ADMIN_PASSWORD in environment variables!');
+}
+
 // Session storage (in-memory, resets on restart)
 const sessions = new Map();
 
