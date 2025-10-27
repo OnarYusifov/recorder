@@ -75,6 +75,10 @@ class AudioProcessor {
                     '-ar 48000',       // sample rate
                     '-ac 2',           // channels
                 ])
+                .audioFilters([
+                    'loudnorm=I=-16:TP=-1.5:LRA=11',  // Normalize loudness
+                    'volume=2.0'  // Boost volume by 2x
+                ])
                 .audioCodec('libmp3lame')
                 .audioBitrate('128k')
                 .on('end', () => resolve(outputPath))
@@ -92,12 +96,17 @@ class AudioProcessor {
                 command.input(file);
             });
 
-            // Create filter complex for mixing
+            // Create filter complex for mixing with normalization
             const filterInputs = inputFiles.map((_, i) => `[${i}:a]`).join('');
-            const filterComplex = `${filterInputs}amix=inputs=${inputFiles.length}:duration=longest:dropout_transition=2`;
+            const filterComplex = [
+                `${filterInputs}amix=inputs=${inputFiles.length}:duration=longest:dropout_transition=2[mixed]`,
+                '[mixed]loudnorm=I=-16:TP=-1.5:LRA=11[normalized]',
+                '[normalized]volume=1.5[out]'
+            ];
 
             command
-                .complexFilter([filterComplex])
+                .complexFilter(filterComplex)
+                .map('[out]')
                 .audioCodec('libmp3lame')
                 .audioBitrate('192k')
                 .on('end', () => resolve(outputPath))

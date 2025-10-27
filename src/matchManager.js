@@ -51,15 +51,33 @@ class MatchManager {
                 bot1: null,
                 bot2: null
             },
-            startedBy
+            startedBy,
+            status: 'active'
         };
         
         this.activeMatch = match;
+        
+        // Save active match to file immediately for cross-container coordination
+        this.matches.unshift(match);
+        this.saveMatches();
+        
+        console.log(`📝 Match started and saved: ${match.team1} vs ${match.team2} (ID: ${match.id})`);
         return match;
     }
 
     finishMatch(botNumber, recordingData) {
-        if (!this.activeMatch) return null;
+        // Reload matches from file to get latest state (for cross-container coordination)
+        this.matches = this.loadMatches();
+        
+        // Find active match from file if not in memory
+        if (!this.activeMatch) {
+            this.activeMatch = this.matches.find(m => m.status === 'active');
+        }
+        
+        if (!this.activeMatch) {
+            console.log('⚠️ No active match found');
+            return null;
+        }
 
         // Add recording data
         this.activeMatch.recordings[`bot${botNumber}`] = {
@@ -70,21 +88,39 @@ class MatchManager {
             duration: recordingData.endTime - recordingData.startTime
         };
 
-        // If both bots have finished, save the match
+        // Update match in array
+        const matchIndex = this.matches.findIndex(m => m.id === this.activeMatch.id);
+        if (matchIndex !== -1) {
+            this.matches[matchIndex] = this.activeMatch;
+        }
+
+        // If both bots have finished, mark as complete
         if (this.activeMatch.recordings.bot1 && this.activeMatch.recordings.bot2) {
             this.activeMatch.endTime = new Date().toISOString();
-            this.matches.unshift(this.activeMatch); // Add to beginning
+            this.activeMatch.status = 'completed';
+            this.matches[matchIndex] = this.activeMatch;
             this.saveMatches();
+            
+            console.log(`✅ Match completed: ${this.activeMatch.team1} vs ${this.activeMatch.team2}`);
             
             const completedMatch = this.activeMatch;
             this.activeMatch = null;
             return completedMatch;
+        } else {
+            // Save partial progress
+            this.saveMatches();
+            console.log(`💾 Bot ${botNumber} recording saved, waiting for other bot...`);
         }
 
         return this.activeMatch;
     }
 
     getActiveMatch() {
+        // Reload from file for cross-container coordination
+        if (!this.activeMatch) {
+            this.matches = this.loadMatches();
+            this.activeMatch = this.matches.find(m => m.status === 'active');
+        }
         return this.activeMatch;
     }
 

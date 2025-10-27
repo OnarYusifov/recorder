@@ -71,6 +71,9 @@ class RecordingManager {
             setTimeout(() => reject(new Error('Connection timeout')), 10000);
         });
 
+        // Wait a bit for all voice states to settle (especially for mobile users)
+        await new Promise(resolve => setTimeout(resolve, 1000));
+
         // Start receiving audio
         this.setupAudioReceiver(recording);
 

@@ -87,135 +87,157 @@ ls -la /var/dokploy/recorder/
 
 1. Click **"Applications"** or **"Services"** in sidebar
 2. Click **"Create Application"** or **"+ New"** button
-3. Fill in the form:
+3. Fill in the **PROVIDER** section:
 
-**Basic Settings:**
+**Provider Tab:**
 ```
-Name: trayb-recorder-bot1
-Description: Discord Bot 1 - Team A Recorder
-```
-
-**Source:**
-```
-Type: GitHub
-Repository: Select your repo (trayb-recorder)
+Provider: GitHub (click the GitHub icon)
+GitHub Account: Select your account (trecorder or your username)
+Repository: recorder
 Branch: main
+Build Path: / (leave as default)
+Trigger Type: On Push (leave as default)
+Watch Paths: (leave empty)
+Enable Submodules: (leave unchecked)
 ```
 
-**Build Settings:**
+Click **"Save"** at the bottom
+
+4. Go to **BUILD TYPE** tab:
+
+**Build Type Tab:**
 ```
-Build Type: Node.js / npm
-Build Command: npm install
-Start Command: npm run bot1
+Build Type: Select "Nixpacks" (should be default)
+Publish Directory: (leave empty - not needed)
 ```
 
-**Port Settings:**
-```
-Skip this - Discord bots don't need ports
-```
+Click **"Save"**
 
-4. Click **"Create"** or **"Next"**
+**Note:** Nixpacks automatically detects Node.js and runs the right commands. No need to manually specify build/start commands!
 
 ---
 
 ### Step 4: Configure Environment Variables - Bot 1
 
-Find the **"Environment Variables"** section (might be a separate tab)
+1. Go to **"Environment"** tab (or **"Environment Variables"** section)
+2. Add these variables by clicking **"+ Add"** or similar button:
 
-Add these variables:
-
+**Required Variables:**
 ```
-BOT1_TOKEN = your_discord_bot_1_token_here
-BOT1_AUTHORIZED_USERS = your_discord_user_id_here
-BOT1_UPLOAD_CHANNEL_ID = your_discord_channel_id_here
-WEB_URL = https://rec.trayb.az
-NODE_ENV = production
+Key: BOT1_TOKEN
+Value: your_discord_bot_1_token_here
+
+Key: BOT1_AUTHORIZED_USERS
+Value: your_discord_user_id_here
+
+Key: BOT1_UPLOAD_CHANNEL_ID
+Value: your_discord_channel_id_here
+
+Key: WEB_URL
+Value: https://rec.trayb.az
+
+Key: NODE_ENV
+Value: production
 ```
 
-**How to add:**
-1. Click **"Add Variable"** or **"+"**
+**How to add each variable:**
+1. Click **"+ Add"** or **"Add Variable"**
 2. Enter **Key** (e.g., `BOT1_TOKEN`)
 3. Enter **Value** (paste your token)
-4. Repeat for each variable
-5. Click **"Save"**
+4. Click **"Add"** or **"Save"**
+5. Repeat for all 5 variables
+6. Click **"Save"** at the bottom of the page
 
 ---
 
 ### Step 5: Configure Volumes - Bot 1
 
-Find the **"Volumes"** or **"Mounts"** section
+1. Go to **"Volumes"** or **"Mounts"** tab
+2. Add **two volumes** by clicking **"+ Add Volume"** or similar:
 
-Add these two volumes:
-
-**Volume 1:**
+**Volume 1 (Output Directory):**
 ```
+Name: output (or leave auto-generated)
 Container Path: /app/output
 Host Path: /var/dokploy/recorder/output
-Type: Bind Mount
+Type: Bind Mount (or Volume)
 ```
 
-**Volume 2:**
+**Volume 2 (Data Directory):**
 ```
+Name: data (or leave auto-generated)
 Container Path: /app/data
 Host Path: /var/dokploy/recorder/data
-Type: Bind Mount
+Type: Bind Mount (or Volume)
 ```
 
-**How to add:**
-1. Click **"Add Volume"** or **"+"**
-2. Enter container path: `/app/output`
-3. Enter host path: `/var/dokploy/recorder/output`
-4. Select type: **Bind Mount**
-5. Click **"Add"** or **"Save"**
-6. Repeat for second volume
+**How to add each volume:**
+1. Click **"+ Add Volume"** or **"Add Mount"**
+2. Fill in the fields as shown above
+3. Click **"Add"** or **"Save"**
+4. Repeat for second volume
+5. Click **"Save"** at the bottom of the page
+
+**⚠️ Important:** Make sure the host paths are EXACTLY:
+- `/var/dokploy/recorder/output`
+- `/var/dokploy/recorder/data`
 
 ---
 
-### Step 6: Deploy Bot 1
+### Step 6: Configure Start Command - Bot 1
 
-1. Click **"Deploy"** button
-2. Wait for deployment (watch logs)
-3. Look for success message:
+**IMPORTANT:** Nixpacks auto-detects Node.js, but we need to tell it which command to run!
+
+1. Go to **"Advanced"** tab or look for **"Custom Start Command"** setting
+2. Find **"Start Command"** or **"Command"** field
+3. Enter: `npm run bot1`
+4. Click **"Save"**
+
+### Step 7: Deploy Bot 1
+
+1. Go back to the main service page (or **"Deployments"** tab)
+2. Click **"Deploy"** button (or **"Redeploy"**)
+3. Wait for deployment (you can click **"Logs"** to watch progress)
+4. Look for success messages in logs:
    ```
    ✅ Bot 1 logged in as YourBot#1234
-   ✅ Slash commands registered
+   🔒 Authorized users: 1
+   ✅ Slash commands registered successfully!
    ```
 
-**✅ Checkpoint:** Bot 1 is running!
+**✅ Checkpoint:** Bot 1 is running! Status should show **"Running"** or **"Active"**
 
 ---
 
 ## 🤖 SERVICE 2: BOT 2
 
-### Step 7: Create Service - Bot 2
+### Step 8: Create Service - Bot 2
 
-Repeat the same process as Bot 1, but with these differences:
+**Repeat the same process as Bot 1, with ONE difference: the start command!**
 
 1. Click **"Create Application"** again
-2. Fill in:
+2. **Provider Tab:**
+   ```
+   Provider: GitHub
+   GitHub Account: Your account
+   Repository: recorder
+   Branch: main
+   Build Path: /
+   Trigger Type: On Push
+   ```
+   Save
 
-**Basic Settings:**
-```
-Name: trayb-recorder-bot2
-Description: Discord Bot 2 - Team B Recorder
-```
-
-**Source:**
-```
-Type: GitHub
-Repository: Same repo (trayb-recorder)
-Branch: main
-```
-
-**Build Settings:**
-```
-Build Command: npm install
-Start Command: npm run bot2    ← DIFFERENT!
-```
+3. **Build Type Tab:**
+   ```
+   Build Type: Nixpacks
+   ```
+   Save
 
 ---
 
-### Step 8: Configure Environment Variables - Bot 2
+### Step 9: Configure Environment Variables - Bot 2
+
+Go to **"Environment"** tab and add:
 
 ```
 BOT2_TOKEN = your_discord_bot_2_token_here    ← DIFFERENT!
@@ -225,11 +247,15 @@ WEB_URL = https://rec.trayb.az
 NODE_ENV = production
 ```
 
+Click **"Save"**
+
 ---
 
-### Step 9: Configure Volumes - Bot 2
+### Step 10: Configure Volumes - Bot 2
 
-**IMPORTANT:** Same volumes as Bot 1!
+Go to **"Volumes"** tab and add:
+
+**⚠️ CRITICAL:** Use the EXACT SAME paths as Bot 1!
 
 **Volume 1:**
 ```
@@ -243,16 +269,29 @@ Container Path: /app/data
 Host Path: /var/dokploy/recorder/data    ← SAME AS BOT 1!
 ```
 
+Click **"Save"**
+
 ---
 
-### Step 10: Deploy Bot 2
+### Step 11: Configure Start Command - Bot 2
 
-1. Click **"Deploy"**
-2. Wait for deployment
+Go to **"Advanced"** tab and set:
+
+```
+Start Command: npm run bot2    ← DIFFERENT FROM BOT 1!
+```
+
+Click **"Save"**
+
+### Step 12: Deploy Bot 2
+
+1. Click **"Deploy"** button
+2. Wait for deployment (watch logs)
 3. Look for:
    ```
    ✅ Bot 2 logged in as YourBot#5678
-   ✅ Slash commands registered
+   🔒 Authorized users: 1
+   ✅ Slash commands registered successfully!
    ```
 
 **✅ Checkpoint:** Bot 2 is running!
@@ -261,63 +300,60 @@ Host Path: /var/dokploy/recorder/data    ← SAME AS BOT 1!
 
 ## 🌐 SERVICE 3: WEB INTERFACE
 
-### Step 11: Create Service - Web
+### Step 13: Create Service - Web
 
 1. Click **"Create Application"** again
-2. Fill in:
+2. **Provider Tab:**
+   ```
+   Provider: GitHub
+   GitHub Account: Your account
+   Repository: recorder
+   Branch: main
+   Build Path: /
+   Trigger Type: On Push
+   ```
+   Save
 
-**Basic Settings:**
-```
-Name: trayb-recorder-web
-Description: Web interface for recordings
-```
-
-**Source:**
-```
-Type: GitHub
-Repository: Same repo (trayb-recorder)
-Branch: main
-```
-
-**Build Settings:**
-```
-Build Command: npm install
-Start Command: npm run web    ← DIFFERENT!
-```
-
-**Port Settings:**
-```
-Internal Port: 8080    ← IMPORTANT!
-External Port: 8080    ← IMPORTANT!
-Protocol: HTTP
-```
+3. **Build Type Tab:**
+   ```
+   Build Type: Nixpacks
+   ```
+   Save
 
 ---
 
-### Step 12: Configure Domain - Web
+### Step 14: Configure Port - Web
 
-Find the **"Domains"** section
+1. Go to **"Ports"** or **"Network"** tab
+2. Add port mapping:
+   ```
+   Container Port: 8080
+   Published Port: 8080
+   Protocol: TCP
+   ```
+3. Click **"Save"**
 
-Add domain:
-```
-Domain: rec.trayb.az
-Path: /
-Port: 8080
-SSL: Enable (Let's Encrypt)    ← IMPORTANT!
-```
+### Step 15: Configure Domain - Web
 
-**How to add:**
-1. Click **"Add Domain"** or **"+"**
-2. Enter: `rec.trayb.az`
-3. Select port: `8080`
-4. Enable SSL toggle
-5. Click **"Save"** or **"Add"**
+1. Go to **"Domains"** tab
+2. Click **"Add Domain"** or **"+"**
+3. Fill in:
+   ```
+   Domain: rec.trayb.az
+   Container Port: 8080
+   Path: / (default)
+   HTTPS: Enable (toggle on)
+   Certificate: Let's Encrypt (automatic)
+   ```
+4. Click **"Add"** or **"Save"**
 
-Dokploy will automatically request SSL certificate from Let's Encrypt.
+Dokploy will automatically request and install SSL certificate from Let's Encrypt.
 
 ---
 
-### Step 13: Configure Environment Variables - Web
+### Step 16: Configure Environment Variables - Web
+
+Go to **"Environment"** tab and add:
 
 ```
 WEB_PORT = 8080
@@ -325,11 +361,15 @@ WEB_URL = https://rec.trayb.az
 NODE_ENV = production
 ```
 
+Click **"Save"**
+
 ---
 
-### Step 14: Configure Volumes - Web
+### Step 17: Configure Volumes - Web
 
-**IMPORTANT:** Same volumes as Bot 1 & Bot 2!
+Go to **"Volumes"** tab and add:
+
+**⚠️ CRITICAL:** Use the EXACT SAME paths as the bots!
 
 **Volume 1:**
 ```
@@ -343,12 +383,24 @@ Container Path: /app/data
 Host Path: /var/dokploy/recorder/data    ← SAME AS BOTS!
 ```
 
+Click **"Save"**
+
 ---
 
-### Step 15: Deploy Web
+### Step 18: Configure Start Command - Web
 
-1. Click **"Deploy"**
-2. Wait for deployment
+Go to **"Advanced"** tab and set:
+
+```
+Start Command: npm run web
+```
+
+Click **"Save"**
+
+### Step 19: Deploy Web
+
+1. Click **"Deploy"** button
+2. Wait for deployment (watch logs)
 3. Look for:
    ```
    🌐 Web interface running at http://localhost:8080
@@ -361,7 +413,7 @@ Host Path: /var/dokploy/recorder/data    ← SAME AS BOTS!
 
 ## 🌐 DNS CONFIGURATION
 
-### Step 16: Add DNS Record
+### Step 20: Add DNS Record
 
 Go to your DNS provider (Cloudflare, etc.):
 
@@ -392,7 +444,7 @@ dig trayb.az +short
 
 ---
 
-### Step 17: Wait for DNS Propagation
+### Step 21: Wait for DNS Propagation
 
 ```bash
 # Check if DNS is working (from your local machine)
@@ -407,7 +459,7 @@ Usually takes 1-5 minutes with Cloudflare, up to 30 minutes elsewhere.
 
 ## ✅ VERIFICATION
 
-### Step 18: Check All Services
+### Step 22: Check All Services
 
 **In Dokploy Dashboard:**
 
@@ -421,7 +473,7 @@ You should see 3 services all with status: **Running** ✅
 
 ---
 
-### Step 19: Check Logs
+### Step 23: Check Logs
 
 **For each service:**
 
@@ -451,7 +503,7 @@ You should see 3 services all with status: **Running** ✅
 
 ---
 
-### Step 20: Test Web Interface
+### Step 24: Test Web Interface
 
 Open browser: **https://rec.trayb.az**
 
@@ -473,7 +525,7 @@ You should see:
 
 ---
 
-### Step 21: Test Discord Bots
+### Step 25: Test Discord Bots
 
 **In Discord:**
 
@@ -490,7 +542,7 @@ You should see:
 
 ---
 
-### Step 22: Full Test - Record a Match
+### Step 26: Full Test - Record a Match
 
 1. Join a voice channel
 2. **Bot 1:** `/record channel:#your-channel teamname:TestTeamA vsteam:TestTeamB`
