@@ -1,15 +1,16 @@
-FROM node:22-alpine
+FROM node:22
 
-# Install system dependencies for canvas
-RUN apk add --no-cache \
-    build-base \
-    cairo-dev \
-    pango-dev \
-    jpeg-dev \
-    giflib-dev \
-    librsvg-dev \
-    python3 \
-    pkgconfig
+# Install system dependencies for canvas and ffmpeg
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    libcairo2-dev \
+    libpango1.0-dev \
+    libjpeg-dev \
+    libgif-dev \
+    librsvg2-dev \
+    pkg-config \
+    ffmpeg \
+    && rm -rf /var/lib/apt/lists/*
 
 # Set working directory
 WORKDIR /app
