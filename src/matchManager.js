@@ -66,18 +66,22 @@ class MatchManager {
     }
 
     finishMatch(botNumber, recordingData) {
+        console.log(`🔧 Bot ${botNumber} finishing match...`);
+        
         // Reload matches from file to get latest state (for cross-container coordination)
         this.matches = this.loadMatches();
+        console.log(`📂 Loaded ${this.matches.length} matches from file`);
         
-        // Find active match from file if not in memory
-        if (!this.activeMatch) {
-            this.activeMatch = this.matches.find(m => m.status === 'active');
-        }
+        // ALWAYS reload active match from file (critical for cross-container sync)
+        this.activeMatch = this.matches.find(m => m.status === 'active');
         
         if (!this.activeMatch) {
-            console.log('⚠️ No active match found');
+            console.error('❌ No active match found in matches.json!');
+            console.error(`Available matches: ${JSON.stringify(this.matches.map(m => ({ id: m.id, status: m.status })))}`);
             return null;
         }
+        
+        console.log(`✅ Found active match: ${this.activeMatch.team1} vs ${this.activeMatch.team2} (ID: ${this.activeMatch.id})`);
 
         // Add recording data
         this.activeMatch.recordings[`bot${botNumber}`] = {
@@ -87,21 +91,32 @@ class MatchManager {
             talkTime: Object.fromEntries(recordingData.userTalkTime || new Map()),
             duration: recordingData.endTime - recordingData.startTime
         };
+        
+        console.log(`💾 Added bot${botNumber} recording data (${recordingData.users.size} users)`);
 
         // Update match in array
         const matchIndex = this.matches.findIndex(m => m.id === this.activeMatch.id);
-        if (matchIndex !== -1) {
-            this.matches[matchIndex] = this.activeMatch;
+        if (matchIndex === -1) {
+            console.error(`❌ Match ${this.activeMatch.id} not found in matches array!`);
+            return null;
         }
+        
+        this.matches[matchIndex] = this.activeMatch;
+        console.log(`✅ Updated match at index ${matchIndex}`);
+
+        // Check completion status
+        const bot1Done = !!this.activeMatch.recordings.bot1;
+        const bot2Done = !!this.activeMatch.recordings.bot2;
+        console.log(`📊 Match status: Bot1=${bot1Done}, Bot2=${bot2Done}`);
 
         // If both bots have finished, mark as complete
-        if (this.activeMatch.recordings.bot1 && this.activeMatch.recordings.bot2) {
+        if (bot1Done && bot2Done) {
             this.activeMatch.endTime = new Date().toISOString();
             this.activeMatch.status = 'completed';
             this.matches[matchIndex] = this.activeMatch;
             this.saveMatches();
             
-            console.log(`✅ Match completed: ${this.activeMatch.team1} vs ${this.activeMatch.team2}`);
+            console.log(`🏆 Match completed: ${this.activeMatch.team1} vs ${this.activeMatch.team2}`);
             
             const completedMatch = this.activeMatch;
             this.activeMatch = null;
@@ -109,7 +124,7 @@ class MatchManager {
         } else {
             // Save partial progress
             this.saveMatches();
-            console.log(`💾 Bot ${botNumber} recording saved, waiting for other bot...`);
+            console.log(`💾 Bot ${botNumber} recording saved, waiting for ${bot1Done ? 'Bot 2' : 'Bot 1'}...`);
         }
 
         return this.activeMatch;
