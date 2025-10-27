@@ -323,6 +323,12 @@ async function processAndUpload(recordingData, guild, match = null) {
         // Generate canvas with talk time statistics
         const canvasGenerator = new CanvasGenerator();
         const canvasBuffer = await canvasGenerator.generateTalkTimeCanvas(recordingData);
+        
+        // Save canvas to output directory for web interface
+        const outputDir = path.join(__dirname, '..', 'output', recordingData.sessionId);
+        const statsPath = path.join(outputDir, 'stats.png');
+        fs.writeFileSync(statsPath, canvasBuffer);
+        console.log(`📊 Stats chart saved: ${statsPath}`);
 
         // Create embed
         const duration = Math.floor((endTime - startTime) / 1000);
