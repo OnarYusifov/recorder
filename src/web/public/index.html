@@ -18,6 +18,67 @@
             line-height: 1.6;
         }
 
+        /* Login Screen */
+        .login-screen {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .login-box {
+            border: 2px solid #fff;
+            padding: 40px;
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .login-box h2 {
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .login-box input {
+            width: 100%;
+            padding: 15px;
+            background: #000;
+            border: 2px solid #fff;
+            color: #fff;
+            font-family: inherit;
+            font-size: 16px;
+            margin-bottom: 20px;
+        }
+
+        .login-box input:focus {
+            outline: none;
+            border-color: #666;
+        }
+
+        .login-box button {
+            width: 100%;
+            padding: 15px;
+            background: #fff;
+            color: #000;
+            border: none;
+            font-family: inherit;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .login-box button:hover {
+            background: #ccc;
+        }
+
+        .login-box .error {
+            color: #f00;
+            margin-top: 10px;
+            text-align: center;
+        }
+
+        /* Main App */
         .container {
             max-width: 1200px;
             margin: 0 auto;
@@ -43,6 +104,29 @@
             font-size: 14px;
         }
 
+        .auth-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #333;
+        }
+
+        .auth-controls button {
+            padding: 10px 20px;
+            background: #000;
+            border: 2px solid #fff;
+            color: #fff;
+            font-family: inherit;
+            cursor: pointer;
+        }
+
+        .auth-controls button:hover {
+            background: #fff;
+            color: #000;
+        }
+
         .matches {
             display: grid;
             gap: 30px;
@@ -52,6 +136,7 @@
             border: 2px solid #fff;
             padding: 30px;
             transition: all 0.3s;
+            position: relative;
         }
 
         .match:hover {
@@ -82,6 +167,14 @@
             font-size: 12px;
         }
 
+        .match-info {
+            display: flex;
+            gap: 30px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            color: #999;
+        }
+
         .recordings {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -103,20 +196,21 @@
 
         .user-list {
             list-style: none;
-            margin: 15px 0;
+            margin-bottom: 15px;
         }
 
         .user-list li {
             padding: 5px 0;
-            color: #999;
+            color: #ccc;
         }
 
         .download-links {
-            margin-top: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
         }
 
         .download-links a {
-            display: block;
             color: #fff;
             text-decoration: none;
             padding: 8px 0;
@@ -129,42 +223,29 @@
             color: #0f0;
         }
 
-        .stats {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-            margin-top: 20px;
-            padding-top: 20px;
-            border-top: 1px solid #333;
-        }
-
-        .stat {
-            text-align: center;
-        }
-
-        .stat-value {
-            font-size: 24px;
-            font-weight: bold;
-        }
-
-        .stat-label {
+        .delete-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            padding: 8px 16px;
+            background: #000;
+            border: 1px solid #f00;
+            color: #f00;
+            font-family: inherit;
             font-size: 12px;
-            color: #666;
-            margin-top: 5px;
+            cursor: pointer;
         }
 
-        .no-matches {
+        .delete-btn:hover {
+            background: #f00;
+            color: #000;
+        }
+
+        .empty-state {
             text-align: center;
             padding: 100px 20px;
             color: #666;
-            font-size: 18px;
-        }
-
-        .loading {
-            text-align: center;
-            padding: 100px 20px;
-            color: #666;
-            font-size: 18px;
+            font-size: 20px;
         }
 
         @media (max-width: 768px) {
@@ -180,75 +261,191 @@
     </style>
 </head>
 <body>
-    <div class="container">
+    <!-- Login Screen -->
+    <div id="loginScreen" class="login-screen" style="display: none;">
+        <div class="login-box">
+            <h2>🔒 AUTHENTICATION</h2>
+            <form id="loginForm">
+                <input 
+                    type="password" 
+                    id="password" 
+                    placeholder="Enter password" 
+                    autocomplete="off"
+                    required
+                />
+                <button type="submit">LOGIN</button>
+                <div id="loginError" class="error"></div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Main App -->
+    <div id="appContent" class="container" style="display: none;">
         <header>
             <h1>TRAYB RECORDINGS</h1>
             <div class="subtitle">Match recordings archive</div>
         </header>
 
-        <div id="matches-container">
-            <div class="loading">Loading matches...</div>
+        <div class="auth-controls">
+            <div id="authStatus"></div>
+            <button onclick="logout()">LOGOUT</button>
         </div>
+
+        <div class="matches" id="matches"></div>
     </div>
 
     <script>
+        let isAdmin = false;
+
+        // Check auth status on load
+        async function checkAuth() {
+            try {
+                const response = await fetch('/api/auth/status');
+                const data = await response.json();
+                
+                if (data.authenticated) {
+                    isAdmin = data.isAdmin;
+                    showApp();
+                } else {
+                    showLogin();
+                }
+            } catch (error) {
+                showLogin();
+            }
+        }
+
+        // Show login screen
+        function showLogin() {
+            document.getElementById('loginScreen').style.display = 'flex';
+            document.getElementById('appContent').style.display = 'none';
+        }
+
+        // Show main app
+        function showApp() {
+            document.getElementById('loginScreen').style.display = 'none';
+            document.getElementById('appContent').style.display = 'block';
+            
+            const statusDiv = document.getElementById('authStatus');
+            statusDiv.textContent = isAdmin ? '👑 ADMIN' : '🔓 AUTHENTICATED';
+            statusDiv.style.color = isAdmin ? '#0f0' : '#fff';
+            
+            loadMatches();
+        }
+
+        // Handle login
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const password = document.getElementById('password').value;
+            const errorDiv = document.getElementById('loginError');
+            
+            try {
+                const response = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ password })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    isAdmin = data.isAdmin;
+                    showApp();
+                } else {
+                    errorDiv.textContent = data.error || 'Invalid password';
+                }
+            } catch (error) {
+                errorDiv.textContent = 'Login failed';
+            }
+        });
+
+        // Logout
+        async function logout() {
+            await fetch('/api/logout', { method: 'POST' });
+            isAdmin = false;
+            showLogin();
+        }
+
+        // Delete match (admin only)
+        async function deleteMatch(matchId) {
+            if (!isAdmin) {
+                alert('Admin access required');
+                return;
+            }
+            
+            if (!confirm('Are you sure you want to delete this match and all its recordings?')) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/matches/${matchId}`, {
+                    method: 'DELETE'
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    loadMatches(); // Reload
+                } else {
+                    alert('Delete failed: ' + (data.error || 'Unknown error'));
+                }
+            } catch (error) {
+                alert('Delete failed: ' + error.message);
+            }
+        }
+
+        // Load matches
         async function loadMatches() {
             try {
                 const response = await fetch('/api/matches');
                 const matches = await response.json();
                 
-                const container = document.getElementById('matches-container');
+                const container = document.getElementById('matches');
                 
-                if (matches.length === 0) {
-                    container.innerHTML = '<div class="no-matches">No matches recorded yet</div>';
+                if (!matches || matches.length === 0) {
+                    container.innerHTML = '<div class="empty-state">No matches recorded yet</div>';
                     return;
                 }
-
-                container.innerHTML = `
-                    <div class="matches">
-                        ${matches.map(match => renderMatch(match)).join('')}
-                    </div>
-                `;
+                
+                container.innerHTML = matches.map(match => {
+                    const date = new Date(match.startTime).toLocaleString();
+                    const deleteBtn = isAdmin ? `<button class="delete-btn" onclick="deleteMatch(${match.id})">🗑 DELETE</button>` : '';
+                    
+                    return `
+                        <div class="match">
+                            ${deleteBtn}
+                            <div class="match-header">
+                                <div class="vs">
+                                    <span class="team">${match.team1}</span>
+                                    VS
+                                    <span class="team">${match.team2}</span>
+                                </div>
+                                <div class="date">${date}</div>
+                            </div>
+                            
+                            <div class="match-info">
+                                <div>📍 ${match.channel}</div>
+                                <div>⏱ ${match.recordings.bot1 ? formatDuration(match.recordings.bot1.duration) : 'N/A'}</div>
+                            </div>
+                            
+                            <div class="recordings">
+                                ${renderRecording(match, 'bot1', match.team1)}
+                                ${renderRecording(match, 'bot2', match.team2)}
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+                
             } catch (error) {
-                console.error('Error loading matches:', error);
-                document.getElementById('matches-container').innerHTML = 
-                    '<div class="no-matches">Error loading matches</div>';
+                document.getElementById('matches').innerHTML = 
+                    '<div class="empty-state">Error loading matches</div>';
             }
         }
 
-        function renderMatch(match) {
-            const date = new Date(match.startTime).toLocaleString();
-            const duration = match.endTime ? 
-                Math.floor((new Date(match.endTime) - new Date(match.startTime)) / 1000 / 60) : 0;
-
-            return `
-                <div class="match">
-                    <div class="match-header">
-                        <div class="vs">
-                            <span class="team">${match.team1}</span>
-                            <span style="color: #666"> VS </span>
-                            <span class="team">${match.team2}</span>
-                        </div>
-                        <div class="date">${date}</div>
-                    </div>
-
-                    <div class="recordings">
-                        ${renderRecording(match, 'bot1', match.team1)}
-                        ${renderRecording(match, 'bot2', match.team2)}
-                    </div>
-
-                    <div class="stats">
-                        <div class="stat">
-                            <div class="stat-value">${duration}min</div>
-                            <div class="stat-label">DURATION</div>
-                        </div>
-                        <div class="stat">
-                            <div class="stat-value">${match.channel}</div>
-                            <div class="stat-label">CHANNEL</div>
-                        </div>
-                    </div>
-                </div>
-            `;
+        function formatDuration(ms) {
+            const seconds = Math.floor(ms / 1000);
+            const minutes = Math.floor(seconds / 60);
+            const secs = seconds % 60;
+            return `${minutes}m ${secs}s`;
         }
 
         function renderRecording(match, botKey, teamName) {
@@ -273,7 +470,7 @@
                         <a href="/output/${rec.sessionId}/combined.mp3" download>
                             ▶ Combined Audio
                         </a>
-                        ${rec.users.map((user, i) => `
+                        ${rec.users.map(user => `
                             <a href="/output/${rec.sessionId}/${user.replace(/[^a-zA-Z0-9]/g, '_')}.mp3" download>
                                 ▶ ${user}
                             </a>
@@ -286,11 +483,11 @@
             `;
         }
 
-        // Load matches on page load
-        loadMatches();
-
         // Auto-refresh every 30 seconds
         setInterval(loadMatches, 30000);
+
+        // Initialize on page load
+        checkAuth();
     </script>
 </body>
 </html>
