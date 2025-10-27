@@ -125,10 +125,14 @@ class MatchManager {
     }
 
     getAllMatches() {
+        // Always reload from file to get latest state
+        this.matches = this.loadMatches();
         return this.matches;
     }
 
     getMatchById(id) {
+        // Reload from file to get latest state
+        this.matches = this.loadMatches();
         return this.matches.find(m => m.id === parseInt(id));
     }
 }

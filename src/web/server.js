@@ -13,7 +13,9 @@ app.use(express.static(path.join(__dirname, 'public')));
 // Get all matches
 app.get('/api/matches', (req, res) => {
     const matchManager = getInstance();
-    res.json(matchManager.getAllMatches());
+    const matches = matchManager.getAllMatches();
+    console.log(`📊 API request: Found ${matches.length} matches`);
+    res.json(matches);
 });
 
 // Get specific match

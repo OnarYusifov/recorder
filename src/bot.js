@@ -43,9 +43,11 @@ const client = new Client({
 const recordingManager = new RecordingManager();
 const matchManager = getMatchManager();
 
-// Define slash commands
-const commands = [
-    new SlashCommandBuilder()
+// Define slash commands based on bot number
+let recordCommand;
+if (botNumber === '1') {
+    // Bot 1: Full command with teamname and vsteam
+    recordCommand = new SlashCommandBuilder()
         .setName('record')
         .setDescription('Start recording a voice channel')
         .addChannelOption(option =>
@@ -56,11 +58,25 @@ const commands = [
         .addStringOption(option =>
             option.setName('teamname')
                 .setDescription('Name of your team')
-                .setRequired(botNumber === '1')) // Only required for Bot 1
+                .setRequired(true))
         .addStringOption(option =>
             option.setName('vsteam')
-                .setDescription('Name of the opposing team (Bot 1 only)')
-                .setRequired(false)),
+                .setDescription('Name of the opposing team')
+                .setRequired(false));
+} else {
+    // Bot 2: Simple command with only channel
+    recordCommand = new SlashCommandBuilder()
+        .setName('record')
+        .setDescription('Join the active match recording')
+        .addChannelOption(option =>
+            option.setName('channel')
+                .setDescription('The voice channel to record')
+                .setRequired(true)
+                .addChannelTypes(ChannelType.GuildVoice));
+}
+
+const commands = [
+    recordCommand,
     new SlashCommandBuilder()
         .setName('stop')
         .setDescription('Stop the current recording'),
